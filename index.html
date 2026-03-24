@@ -304,7 +304,7 @@ section{padding:6rem 0}
 <section id="hero">
   <div class="container">
     <div class="hero-badge rv"><i class="fas fa-circle" style="font-size:.5rem;color:var(--hud2)"></i> MISSION STATUS: ACTIVE</div>
-    <h1 class="hero-name rv" id="hero-name"><span class="fn" id="hero-fn">HARISH</span><span class="ln text-shimmer" id="hero-ln">VERNEKAR</span></h1>
+    <h1 class="hero-name rv" id="hero-name"><span class="fn" id="hero-fn">HARISH</span><span class="ln" id="hero-ln">VERNEKAR</span></h1>
     <p class="hero-title blur-in">Aerospace Engineer | Spacecraft GNC & Astrodynamics | ML-Driven Controls & Autonomy | Ex-NASA</p>
     <p class="hero-tag rv"><i class="fas fa-meteor"></i> Asteroid (333183) Harishswabhash — Named by the International Astronomical Union</p>
     <div class="hero-btns rv">
@@ -785,8 +785,8 @@ document.querySelectorAll('.ht').forEach(link=>{link.addEventListener('click',fu
     text.split('').forEach((ch,i)=>{
       const span=document.createElement('span');
       span.className='hero-char';
+      span.style.cssText='background:linear-gradient(90deg,var(--hud),var(--hud2),var(--gold),var(--hud));background-size:300% 100%;-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;animation:charReveal .6s cubic-bezier(.16,1,.3,1) forwards, shimmer 4s linear infinite;animation-delay:'+(i*0.06+1)+'s, '+(i*0.06+1.6)+'s';
       span.textContent=ch===' '?'\u00A0':ch;
-      span.style.animationDelay=(i*0.06+1)+'s';
       ln.appendChild(span);
     });
   }
