@@ -1,0 +1,671 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MISSION: Harish Vernekar — Aerospace & GNC Engineer</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@300;400;500;600;700&family=Orbitron:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+/* ═══ THEME ═══ */
+[data-theme="dark"]{
+--bg:#020208;--bg2:#080815;--bg3:#0e0e22;
+--hud:#0ff;--hud2:#00ff88;--hud3:#ff6b35;--hud4:#ff3366;--gold:#ffd43b;
+--text:#eef0f8;--text2:#a0a4c0;--text3:#6e7290;
+--glass:rgba(0,255,255,0.03);--glass2:rgba(0,255,255,0.07);
+--border:rgba(0,255,255,0.08);--border2:rgba(0,255,255,0.18);
+--scanline:rgba(0,255,255,0.015);
+--card-bg:rgba(8,8,21,0.88);
+--glow:0 0 30px rgba(0,255,255,0.12);
+}
+[data-theme="light"]{
+--bg:#f2f4fa;--bg2:#e8eaf4;--bg3:#dde0ee;
+--hud:#1a3a8a;--hud2:#0a7a50;--hud3:#c05000;--hud4:#b0204a;--gold:#9a7800;
+--text:#1a1a30;--text2:#404060;--text3:#707090;
+--glass:rgba(26,58,138,0.04);--glass2:rgba(26,58,138,0.08);
+--border:rgba(26,58,138,0.12);--border2:rgba(26,58,138,0.22);
+--scanline:transparent;--card-bg:rgba(255,255,255,0.92);
+--glow:0 0 20px rgba(26,58,138,0.06);
+}
+
+html{scroll-behavior:smooth}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);overflow-x:hidden;line-height:1.8;font-size:16px;transition:background 0.5s,color 0.5s;cursor:none}
+body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:9998;background:repeating-linear-gradient(0deg,var(--scanline) 0px,var(--scanline) 1px,transparent 1px,transparent 3px);opacity:0.35}
+
+/* ═══ CURSOR ═══ */
+.cur{position:fixed;width:28px;height:28px;border:1.5px solid var(--hud);border-radius:50%;pointer-events:none;z-index:9999;transform:translate(-50%,-50%);transition:width .2s,height .2s;mix-blend-mode:difference}
+.cur.on{width:55px;height:55px;border-color:var(--hud2)}
+.cdot{position:fixed;width:4px;height:4px;background:var(--hud);border-radius:50%;pointer-events:none;z-index:9999;transform:translate(-50%,-50%)}
+
+/* ═══ 3D CANVAS ═══ */
+#scene3d{position:fixed;top:0;left:0;width:100%;height:100%;z-index:0}
+
+/* ═══ BOOT ═══ */
+#boot{position:fixed;inset:0;z-index:10000;background:#020208;display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;transition:opacity 1s}
+#boot-log{color:#0ff;font-size:.85rem;max-width:600px;line-height:2}
+.boot-line{opacity:0;transform:translateY(8px)}
+.boot-bar{width:300px;height:3px;background:#111;margin-top:2rem;border-radius:2px;overflow:hidden}
+.boot-fill{width:0;height:100%;background:linear-gradient(90deg,#0ff,#00ff88);border-radius:2px}
+
+/* ═══ NAV ═══ */
+#nav{position:fixed;top:0;left:0;right:0;z-index:100;padding:0.6rem 2rem;display:flex;align-items:center;gap:1rem;backdrop-filter:blur(20px);background:rgba(2,2,8,0.7);border-bottom:1px solid var(--border);transition:all .3s;font-family:'JetBrains Mono',monospace}
+#nav.scrolled{padding:0.4rem 2rem;background:rgba(2,2,8,0.92)}
+.nav-logo{font-family:'Orbitron',sans-serif;font-weight:800;font-size:1.3rem;color:var(--hud);letter-spacing:2px;white-space:nowrap;flex-shrink:0}
+.nav-logo sub{font-size:.55rem;color:var(--text3);display:block;letter-spacing:1px;font-weight:400;font-family:'JetBrains Mono',monospace;line-height:1}
+.nav-links{display:flex;align-items:center;gap:0.3rem;margin-left:auto;flex-wrap:nowrap;overflow-x:auto;flex-shrink:1;min-width:0}
+.ht{color:var(--text2);text-decoration:none;font-size:.7rem;letter-spacing:1.5px;text-transform:uppercase;padding:0.4rem 0.7rem;border-radius:3px;transition:all .3s;white-space:nowrap;flex-shrink:0}
+.ht:hover,.ht.active{color:var(--hud);background:var(--glass2)}
+.nav-right{display:flex;align-items:center;gap:0.8rem;margin-left:0.5rem;flex-shrink:0}
+.ttgl{display:flex;align-items:center;gap:.4rem;padding:.35rem .7rem;border:1px solid var(--border);border-radius:3px;background:transparent;color:var(--text2);font-family:'JetBrains Mono',monospace;font-size:.65rem;cursor:pointer;transition:all .3s;white-space:nowrap}
+.ttgl:hover{border-color:var(--hud);color:var(--hud)}
+.nav-clk{font-size:.7rem;color:var(--hud3);white-space:nowrap}
+
+/* ═══ HUD ═══ */
+/* ═══ NAV PROGRESS BAR ═══ */
+.nav-progress{position:absolute;bottom:0;left:0;height:2px;background:linear-gradient(90deg,var(--hud),var(--hud2));width:0%;transition:width .1s;border-radius:0 2px 2px 0}
+
+/* ═══ LAYOUT ═══ */
+.container{max-width:1100px;margin:0 auto;padding:0 2rem;position:relative;z-index:2}
+section{padding:6rem 0}
+
+/* ═══ SECTION HEADERS ═══ */
+.sh{margin-bottom:3.5rem}
+.sh-code{font-family:'JetBrains Mono',monospace;font-size:.8rem;color:var(--hud);letter-spacing:3px;margin-bottom:.5rem;text-transform:uppercase}
+.sh-title{font-family:'Orbitron',sans-serif;font-size:2.2rem;font-weight:700;color:var(--text);letter-spacing:1px;margin-bottom:.8rem}
+.sh-sub{color:var(--text2);font-size:1.05rem;max-width:700px;line-height:1.8}
+
+/* ═══ HERO ═══ */
+#hero{min-height:100vh;display:flex;align-items:center;padding-top:5rem}
+.hero-badge{display:inline-flex;align-items:center;gap:.5rem;padding:.4rem 1rem;border:1px solid var(--border2);border-radius:20px;font-family:'JetBrains Mono',monospace;font-size:.75rem;color:var(--hud);margin-bottom:1.5rem;background:var(--glass)}
+.hero-badge i{animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+.hero-name{font-family:'Orbitron',sans-serif;font-size:3.5rem;font-weight:900;line-height:1.1;margin-bottom:1rem}
+.hero-name .fn{color:var(--text)}
+.hero-name .ln{color:var(--hud);display:block}
+.hero-title{font-size:1.15rem;color:var(--text2);margin-bottom:1.5rem;max-width:650px;line-height:1.8}
+.hero-tag{font-family:'JetBrains Mono',monospace;font-size:.85rem;color:var(--gold);margin-bottom:2rem;display:flex;align-items:center;gap:.5rem}
+.hero-btns{display:flex;gap:1rem;flex-wrap:wrap}
+.hb{display:inline-flex;align-items:center;gap:.6rem;padding:.65rem 1.4rem;border:1px solid var(--border2);border-radius:4px;font-family:'JetBrains Mono',monospace;font-size:.8rem;color:var(--text);text-decoration:none;transition:all .3s;background:var(--glass)}
+.hb:hover{border-color:var(--hud);color:var(--hud);background:var(--glass2);transform:translateY(-2px)}
+.hb.primary{background:linear-gradient(135deg,rgba(0,255,255,.12),rgba(0,255,136,.08));border-color:var(--hud)}
+
+/* ═══ ABOUT / BENTO ═══ */
+.bento{display:grid;grid-template-columns:repeat(3,1fr);gap:1.2rem}
+.mcard{padding:1.8rem;border:1px solid var(--border);border-radius:6px;background:var(--card-bg);transition:all .5s;position:relative;overflow:hidden}
+.mcard:hover{border-color:var(--border2);transform:translateY(-4px);box-shadow:var(--glow)}
+.mcard::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--hud),transparent);opacity:0;transition:opacity .5s}
+.mcard:hover::before{opacity:1}
+.mcard.span2{grid-column:span 2}
+.mcard-icon{font-size:1.6rem;color:var(--hud);margin-bottom:1rem}
+.mcard-title{font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:1.15rem;color:var(--text);margin-bottom:.5rem}
+.mcard-val{font-family:'Orbitron',sans-serif;font-size:1.8rem;font-weight:700;color:var(--hud)}
+.mcard-desc{color:var(--text2);font-size:.95rem;line-height:1.7}
+
+/* ═══ EXPERIENCE TIMELINE ═══ */
+.tl{position:relative;padding-left:3rem}
+.tl::before{content:'';position:absolute;left:6px;top:0;bottom:0;width:2px;background:linear-gradient(180deg,var(--hud),var(--hud2),var(--hud3),var(--hud4))}
+.tl-item{position:relative;margin-bottom:2.5rem;padding:1.8rem;border:1px solid var(--border);border-radius:6px;background:var(--card-bg);transition:all .5s}
+.tl-item:hover{border-color:var(--border2);box-shadow:var(--glow)}
+.tl-item::before{content:'';position:absolute;left:-2.75rem;top:2rem;width:12px;height:12px;border:2px solid var(--hud);background:var(--bg);border-radius:2px;transform:rotate(45deg);z-index:2}
+.tl-head{display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:.5rem;margin-bottom:.8rem}
+.tl-role{font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:1.15rem;color:var(--text)}
+.tl-date{font-family:'JetBrains Mono',monospace;font-size:.75rem;color:var(--hud);white-space:nowrap}
+.tl-company{font-size:.95rem;color:var(--hud2);margin-bottom:.4rem;font-weight:500}
+.tl-type{font-family:'JetBrains Mono',monospace;font-size:.65rem;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:.6rem}
+.tl-desc{color:var(--text2);font-size:.95rem;line-height:1.8}
+
+/* ═══ PUBLICATIONS ═══ */
+.pub-list{display:flex;flex-direction:column;gap:1rem}
+.pub-e{padding:1.5rem;border:1px solid var(--border);border-radius:6px;background:var(--card-bg);transition:all .5s;text-decoration:none;display:block;color:inherit}
+.pub-e:hover{border-color:var(--border2);transform:translateX(6px);box-shadow:var(--glow)}
+.pub-venue{font-family:'JetBrains Mono',monospace;font-size:.7rem;color:var(--hud);letter-spacing:1px;text-transform:uppercase;margin-bottom:.4rem}
+.pub-title{font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:1.05rem;color:var(--text);margin-bottom:.3rem}
+.pub-auth{font-size:.85rem;color:var(--text3)}
+
+/* ═══ VIDEOS ═══ */
+.vid-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:2rem}
+.vid-card{border:1px solid var(--border);border-radius:6px;overflow:hidden;background:var(--card-bg);transition:all .5s}
+.vid-card:hover{border-color:var(--border2);transform:translateY(-6px);box-shadow:var(--glow)}
+.vid-thumb{position:relative;aspect-ratio:16/9;background:var(--bg3);display:flex;align-items:center;justify-content:center;overflow:hidden}
+.vid-thumb video{width:100%;height:100%;object-fit:cover}
+.vid-thumb iframe{width:100%;height:100%;border:none}
+.vid-play{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.45);opacity:1;transition:opacity .3s;cursor:pointer;z-index:2}
+.vid-card:hover .vid-play{opacity:0}
+.vid-play i{font-size:3rem;color:var(--hud);text-shadow:0 0 30px rgba(0,255,255,.5)}
+.vid-info{padding:1.2rem}
+.vid-title{font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:1.05rem;color:var(--text);margin-bottom:.3rem}
+.vid-desc{font-size:.9rem;color:var(--text2);line-height:1.6}
+
+/* ═══ PATENTS ═══ */
+.pat{padding:1.3rem;border:1px solid var(--border);border-radius:6px;background:var(--card-bg);margin-bottom:1rem;transition:all .5s;display:block;text-decoration:none;color:inherit}
+.pat:hover{border-color:var(--gold);transform:translateX(6px)}
+.pat-id{font-family:'JetBrains Mono',monospace;font-size:.7rem;color:var(--gold);margin-bottom:.3rem}
+.pat-title{font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:1rem;color:var(--text)}
+
+/* ═══ AWARDS ═══ */
+.aw{display:flex;align-items:flex-start;gap:1.2rem;padding:1.5rem;border:1px solid var(--border);border-radius:6px;background:var(--card-bg);margin-bottom:1rem;transition:all .5s}
+.aw:hover{border-color:var(--gold);box-shadow:0 0 30px rgba(255,212,59,.08)}
+.aw-icon{font-size:1.8rem;color:var(--gold);flex-shrink:0}
+.aw-title{font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:1.05rem;color:var(--text);margin-bottom:.2rem}
+.aw-desc{font-size:.9rem;color:var(--text2);line-height:1.6}
+
+/* ═══ SKILLS ═══ */
+.sk-g{display:grid;grid-template-columns:repeat(3,1fr);gap:1.2rem}
+.sk-cat{padding:1.5rem;border:1px solid var(--border);border-radius:6px;background:var(--card-bg)}
+.sk-cat-title{font-family:'JetBrains Mono',monospace;font-size:.75rem;color:var(--hud);letter-spacing:2px;text-transform:uppercase;margin-bottom:1rem;padding-bottom:.5rem;border-bottom:1px solid var(--border)}
+.skp{display:inline-block;padding:.3rem .7rem;margin:.2rem;border:1px solid var(--border);border-radius:3px;font-size:.82rem;color:var(--text2);transition:all .3s;background:var(--glass)}
+.skp:hover{border-color:var(--hud);color:var(--hud)}
+
+/* ═══ EDUCATION ═══ */
+.edu{padding:1.8rem;border:1px solid var(--border);border-radius:6px;background:var(--card-bg);margin-bottom:1.2rem;transition:all .5s}
+.edu:hover{border-color:var(--border2);box-shadow:var(--glow)}
+.edu-deg{font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:1.15rem;color:var(--text);margin-bottom:.3rem}
+.edu-school{color:var(--hud2);font-size:1rem;margin-bottom:.2rem}
+.edu-date{font-family:'JetBrains Mono',monospace;font-size:.75rem;color:var(--text3)}
+.edu-details{color:var(--text2);font-size:.95rem;margin-top:.6rem;line-height:1.7}
+
+/* ═══ CONTACT ═══ */
+.cl{display:flex;align-items:center;gap:1rem;padding:1.2rem 1.5rem;border:1px solid var(--border);border-radius:6px;background:var(--card-bg);margin-bottom:.8rem;transition:all .5s;text-decoration:none;color:inherit}
+.cl:hover{border-color:var(--hud);transform:translateX(8px);box-shadow:var(--glow)}
+.cl i{font-size:1.3rem;color:var(--hud);width:30px;text-align:center}
+.cl span{font-size:1rem;color:var(--text)}
+
+/* ═══ REVEAL ═══ */
+.rv{opacity:0;transform:translateY(40px);transition:all .8s cubic-bezier(.16,1,.3,1)}
+.rv.vis{opacity:1;transform:translateY(0)}
+
+/* ═══ RESPONSIVE ═══ */
+@media(max-width:900px){
+  .bento{grid-template-columns:1fr}.mcard.span2{grid-column:span 1}
+  .hero-name{font-size:2.2rem}
+  .sh-title{font-size:1.6rem}
+  .sk-g{grid-template-columns:1fr}
+  .vid-grid{grid-template-columns:1fr}
+  .nav-links{display:none}
+}
+</style>
+</head>
+<body>
+
+<!-- CURSOR -->
+<div class="cur" id="cur"></div>
+<div class="cdot" id="cdot"></div>
+
+<!-- 3D -->
+<canvas id="scene3d"></canvas>
+
+<!-- BOOT -->
+<div id="boot">
+  <div id="boot-log">
+    <div class="boot-line">[SYS] Initializing HARISH.V mission control...</div>
+    <div class="boot-line">[GNC] Loading guidance, navigation & control modules...</div>
+    <div class="boot-line">[NAV] Star tracker calibration: NOMINAL</div>
+    <div class="boot-line">[COM] Establishing deep-space comm link...</div>
+    <div class="boot-line">[RDY] All systems GO — launching portfolio</div>
+  </div>
+  <div class="boot-bar"><div class="boot-fill" id="bfill"></div></div>
+</div>
+
+<!-- NAV -->
+<nav id="nav">
+  <div class="nav-logo">HV<sub>NAV_LOCK: ACTIVE<br>ALT: LEO_NOMINAL</sub></div>
+  <div class="nav-links">
+    <a href="#about" class="ht">MISSION BRIEF</a>
+    <a href="#experience" class="ht">FLIGHT LOG</a>
+    <a href="#publications" class="ht">RESEARCH</a>
+    <a href="#projects" class="ht">PROJECTS</a>
+    <a href="#awards" class="ht">COMMENDATIONS</a>
+    <a href="#skills" class="ht">SYSTEMS</a>
+    <a href="#contact" class="ht">COMMS</a>
+  </div>
+  <div class="nav-right">
+    <button class="ttgl" onclick="toggleTheme()"><i class="fas fa-sun"></i><span id="tlbl">DAY CYCLE</span></button>
+    <span class="nav-clk" id="clk">00:00:00</span>
+  </div>
+  <div class="nav-progress" id="nprog"></div>
+</nav>
+
+
+<!-- HERO -->
+<section id="hero">
+  <div class="container">
+    <div class="hero-badge rv"><i class="fas fa-circle" style="font-size:.5rem;color:var(--hud2)"></i> MISSION STATUS: ACTIVE</div>
+    <h1 class="hero-name rv"><span class="fn">HARISH</span><span class="ln">VERNEKAR</span></h1>
+    <p class="hero-title rv">Aerospace Engineer | Spacecraft GNC & Astrodynamics | ML-Driven Controls & Autonomy | Ex-NASA</p>
+    <p class="hero-tag rv"><i class="fas fa-meteor"></i> Asteroid (333183) Harishswabhash — Named by the International Astronomical Union</p>
+    <div class="hero-btns rv">
+      <a href="#contact" class="hb primary"><i class="fas fa-satellite-dish"></i> OPEN COMMS</a>
+      <a href="#publications" class="hb"><i class="fas fa-file-alt"></i> VIEW RESEARCH</a>
+      <a href="https://scholar.google.com/citations?hl=en&user=CdPmiksAAAAJ" target="_blank" class="hb"><i class="fas fa-graduation-cap"></i> GOOGLE SCHOLAR</a>
+      <a href="https://www.linkedin.com/in/harish-vernekar/" target="_blank" class="hb"><i class="fab fa-linkedin"></i> LINKEDIN</a>
+    </div>
+  </div>
+</section>
+
+<!-- ABOUT -->
+<section id="about">
+  <div class="container">
+    <div class="sh rv"><div class="sh-code">SECTION 01 — MISSION BRIEF</div><div class="sh-title">About Me</div><div class="sh-sub">Spacecraft GNC researcher and aerospace engineer pushing the frontiers of autonomous multi-satellite systems, astrodynamics, and swarm intelligence.</div></div>
+    <div class="bento">
+      <div class="mcard span2 rv">
+        <div class="mcard-icon"><i class="fas fa-rocket"></i></div>
+        <div class="mcard-title">Current Mission</div>
+        <div class="mcard-desc">MS Aerospace Engineering candidate at the University of Arizona, researching under Dr. Jekan Thangavelautham at SpaceTREx Laboratory. Thesis: <em>ARISE — Autonomous Reconfigurable Infrastructure for Swarm-based Exploration</em>. Designing next-generation autonomous multi-satellite systems for asteroid proximity operations.</div>
+      </div>
+      <div class="mcard rv">
+        <div class="mcard-icon"><i class="fas fa-meteor"></i></div>
+        <div class="mcard-title">Named Asteroid</div>
+        <div class="mcard-val">(333183)</div>
+        <div class="mcard-desc">Harishswabhash — recognized by the International Astronomical Union</div>
+      </div>
+      <div class="mcard rv">
+        <div class="mcard-icon"><i class="fas fa-scroll"></i></div>
+        <div class="mcard-title">Publications</div>
+        <div class="mcard-val">10+</div>
+        <div class="mcard-desc">IEEE, AIAA, AAS, IAF conferences and journals</div>
+      </div>
+      <div class="mcard rv">
+        <div class="mcard-icon"><i class="fas fa-lightbulb"></i></div>
+        <div class="mcard-title">Patents</div>
+        <div class="mcard-val">6</div>
+        <div class="mcard-desc">Filed across US and India for spacecraft autonomy & GNC innovations</div>
+      </div>
+      <div class="mcard rv">
+        <div class="mcard-icon"><i class="fas fa-trophy"></i></div>
+        <div class="mcard-title">Global Recognition</div>
+        <div class="mcard-desc">IAF Young Space Leaders Pioneer (Top 5 globally) &amp; AAS Molly K. Macauley Award (Top 10 nationally)</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- EXPERIENCE -->
+<section id="experience">
+  <div class="container">
+    <div class="sh rv"><div class="sh-code">SECTION 02 — FLIGHT LOG</div><div class="sh-title">Experience</div><div class="sh-sub">A trajectory of progressively impactful roles across aerospace R&D, spacecraft GNC, and NASA missions.</div></div>
+    <div class="tl">
+
+      <div class="tl-item rv">
+        <div class="tl-head"><span class="tl-role">R&D Controls Engineer</span><span class="tl-date">Sep 2025 — Present</span></div>
+        <div class="tl-company">eXaminArt LLC</div>
+        <div class="tl-type">Part-time</div>
+        <div class="tl-desc">Developing advanced control systems for autonomous inspection platforms. Integrating ML-driven algorithms for real-time adaptive control and fault detection in robotic systems.</div>
+      </div>
+
+      <div class="tl-item rv">
+        <div class="tl-head"><span class="tl-role">Research Assistant</span><span class="tl-date">Jan 2024 — Present</span></div>
+        <div class="tl-company">SpaceTREx Laboratory, University of Arizona</div>
+        <div class="tl-type">Part-time</div>
+        <div class="tl-desc">Leading research on autonomous multi-satellite systems for asteroid proximity operations. Designing GNC architectures for the CATS-1 CubeSat mission to asteroid Apophis. Developing swarm reconfiguration algorithms using relative orbital elements (ROE).</div>
+      </div>
+
+      <div class="tl-item rv">
+        <div class="tl-head"><span class="tl-role">Graduate Teaching Assistant</span><span class="tl-date">Jan 2024 — Present</span></div>
+        <div class="tl-company">University of Arizona</div>
+        <div class="tl-type">Part-time</div>
+        <div class="tl-desc">Teaching and mentoring undergraduate students in aerospace engineering courses. Conducting lab sessions, grading assignments, and developing course materials.</div>
+      </div>
+
+      <div class="tl-item rv">
+        <div class="tl-head"><span class="tl-role">M-Star Researcher</span><span class="tl-date">Jan 2024 — Aug 2024</span></div>
+        <div class="tl-company">NASA</div>
+        <div class="tl-type">Remote</div>
+        <div class="tl-desc">Contributed to NASA's M-Star initiative on multi-spacecraft technology and autonomous rendezvous systems. Developed simulation frameworks for swarm-based exploration architectures and validated GNC algorithms for deep-space missions.</div>
+      </div>
+
+      <div class="tl-item rv">
+        <div class="tl-head"><span class="tl-role">Sr. Design Engineer / Graduate Engineer Trainee</span><span class="tl-date">Feb 2021 — Mar 2023</span></div>
+        <div class="tl-company">Johnson Controls</div>
+        <div class="tl-type">Full-time</div>
+        <div class="tl-desc">Progressed from Graduate Engineer Trainee to Senior Design Engineer. Led HVAC system design and thermal analysis projects, applying CFD and FEA methodologies to optimize building energy systems for large-scale commercial installations.</div>
+      </div>
+
+      <div class="tl-item rv">
+        <div class="tl-head"><span class="tl-role">CAE Engineer</span><span class="tl-date">Oct 2020 — Feb 2021</span></div>
+        <div class="tl-company">ELEATION</div>
+        <div class="tl-type">Full-time</div>
+        <div class="tl-desc">Performed computer-aided engineering analysis including structural FEA, thermal simulation, and design optimization for automotive and industrial components.</div>
+      </div>
+
+      <div class="tl-item rv">
+        <div class="tl-head"><span class="tl-role">Technical Intern</span><span class="tl-date">Jan 2019 — Feb 2019</span></div>
+        <div class="tl-company">Oerlikon</div>
+        <div class="tl-type">Internship</div>
+        <div class="tl-desc">Gained hands-on experience in precision manufacturing, surface engineering, and advanced materials processing for aerospace and industrial applications.</div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- PUBLICATIONS -->
+<section id="publications">
+  <div class="container">
+    <div class="sh rv"><div class="sh-code">SECTION 03 — RESEARCH TRANSMISSIONS</div><div class="sh-title">Publications</div><div class="sh-sub">Peer-reviewed contributions to the global aerospace research corpus.</div></div>
+    <div class="pub-list">
+
+      <a href="https://scholar.google.com/citations?view_op=view_citation&hl=en&user=CdPmiksAAAAJ&citation_for_view=CdPmiksAAAAJ:UeHWp8X0CEIC" target="_blank" class="pub-e rv">
+        <div class="pub-venue">IEEE Aerospace 2025</div>
+        <div class="pub-title">Autonomous GNC Architecture for Multi-Satellite Proximity Operations Near Asteroid Apophis</div>
+        <div class="pub-auth">H. Vernekar, J. Thangavelautham</div>
+      </a>
+
+      <a href="https://scholar.google.com/citations?view_op=view_citation&hl=en&user=CdPmiksAAAAJ&citation_for_view=CdPmiksAAAAJ:IjCSPb-OGe4C" target="_blank" class="pub-e rv">
+        <div class="pub-venue">AIAA SciTech 2025</div>
+        <div class="pub-title">Swarm Reconfiguration Using Relative Orbital Elements for Asteroid Exploration</div>
+        <div class="pub-auth">H. Vernekar, J. Thangavelautham</div>
+      </a>
+
+      <a href="https://scholar.google.com/citations?view_op=view_citation&hl=en&user=CdPmiksAAAAJ&citation_for_view=CdPmiksAAAAJ:d1gkVwhDpl0C" target="_blank" class="pub-e rv">
+        <div class="pub-venue">AAS GNC 2025</div>
+        <div class="pub-title">ROE-Based Guidance for CubeSat Swarm Formation near Small Bodies</div>
+        <div class="pub-auth">H. Vernekar, J. Thangavelautham</div>
+      </a>
+
+      <a href="https://scholar.google.com/citations?view_op=view_citation&hl=en&user=CdPmiksAAAAJ&citation_for_view=CdPmiksAAAAJ:2osOgNQ5qMEC" target="_blank" class="pub-e rv">
+        <div class="pub-venue">IAF 2024</div>
+        <div class="pub-title">ARISE: Autonomous Reconfigurable Infrastructure for Swarm-based Exploration</div>
+        <div class="pub-auth">H. Vernekar, J. Thangavelautham</div>
+      </a>
+
+      <a href="https://scholar.google.com/citations?view_op=view_citation&hl=en&user=CdPmiksAAAAJ&citation_for_view=CdPmiksAAAAJ:u5HHmVD_uO8C" target="_blank" class="pub-e rv">
+        <div class="pub-venue">IEEE Aerospace 2024</div>
+        <div class="pub-title">Multi-Satellite GNC for Asteroid Proximity Operations using Machine Learning</div>
+        <div class="pub-auth">H. Vernekar, J. Thangavelautham</div>
+      </a>
+
+      <a href="https://scholar.google.com/citations?view_op=view_citation&hl=en&user=CdPmiksAAAAJ&citation_for_view=CdPmiksAAAAJ:9yKSN-GCB0IC" target="_blank" class="pub-e rv">
+        <div class="pub-venue">AIAA SciTech 2024</div>
+        <div class="pub-title">Reinforcement Learning for Spacecraft Rendezvous and Docking Maneuvers</div>
+        <div class="pub-auth">H. Vernekar, J. Thangavelautham</div>
+      </a>
+
+      <a href="https://scholar.google.com/citations?view_op=view_citation&hl=en&user=CdPmiksAAAAJ&citation_for_view=CdPmiksAAAAJ:u-x6o8ySG0sC" target="_blank" class="pub-e rv">
+        <div class="pub-venue">AAS/AIAA Astrodynamics 2024</div>
+        <div class="pub-title">Fault Detection and Isolation for Multi-Satellite Systems in Deep Space</div>
+        <div class="pub-auth">H. Vernekar, J. Thangavelautham</div>
+      </a>
+
+      <a href="https://scholar.google.com/citations?view_op=view_citation&hl=en&user=CdPmiksAAAAJ&citation_for_view=CdPmiksAAAAJ:qjMakFHDy7sC" target="_blank" class="pub-e rv">
+        <div class="pub-venue">IAF 2024</div>
+        <div class="pub-title">Ground-Based Laser Systems for Orbital Debris Remediation</div>
+        <div class="pub-auth">H. Vernekar et al.</div>
+      </a>
+
+      <a href="https://scholar.google.com/citations?view_op=view_citation&hl=en&user=CdPmiksAAAAJ&citation_for_view=CdPmiksAAAAJ:Tyk-4Ss8FVUC" target="_blank" class="pub-e rv">
+        <div class="pub-venue">IEEE Aerospace 2024</div>
+        <div class="pub-title">Hardware-in-the-Loop Validation of Autonomous Proximity Operations</div>
+        <div class="pub-auth">H. Vernekar, J. Thangavelautham</div>
+      </a>
+
+      <a href="https://scholar.google.com/citations?view_op=view_citation&hl=en&user=CdPmiksAAAAJ&citation_for_view=CdPmiksAAAAJ:zYLM7Y9cAGgC" target="_blank" class="pub-e rv">
+        <div class="pub-venue">IAF 2023</div>
+        <div class="pub-title">CubeSat Swarm Architecture for Near-Earth Asteroid Characterization</div>
+        <div class="pub-auth">H. Vernekar, J. Thangavelautham</div>
+      </a>
+
+    </div>
+  </div>
+</section>
+
+<!-- PROJECTS / VIDEOS -->
+<section id="projects">
+  <div class="container">
+    <div class="sh rv"><div class="sh-code">SECTION 04 — MISSION FOOTAGE</div><div class="sh-title">Projects & Demos</div><div class="sh-sub">Visual demonstrations of simulations, hardware-in-the-loop tests, and mission concepts.</div></div>
+    <div class="vid-grid">
+      <div class="vid-card rv">
+        <div class="vid-thumb"><iframe src="https://www.youtube.com/embed/QgUlxKj_hbk" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe></div>
+        <div class="vid-info"><div class="vid-title">Apophis Deployment — FDI Black Ops Grid</div><div class="vid-desc">Truth vs FDI fault detection simulation for CubeSat deployment near asteroid (99942) Apophis with grid-based labeling.</div></div>
+      </div>
+      <div class="vid-card rv">
+        <div class="vid-thumb"><iframe src="https://www.youtube.com/embed/5cB1Gz5dP8Y" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe></div>
+        <div class="vid-info"><div class="vid-title">Deputy 1 Closed-Loop Simulation</div><div class="vid-desc">Energy and pointing closed-loop GNC simulation for deputy satellite with full state feedback control.</div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PATENTS -->
+<section id="patents">
+  <div class="container">
+    <div class="sh rv"><div class="sh-code">SECTION 05 — INTELLECTUAL PROPERTY</div><div class="sh-title">Patents</div><div class="sh-sub">Protected innovations in spacecraft autonomy, GNC, and swarm systems.</div></div>
+    <a href="https://patents.google.com/patent/US18919299" target="_blank" class="pat rv">
+      <div class="pat-id"><i class="fas fa-shield-alt" style="margin-right:.4rem"></i> US 18/919,299</div>
+      <div class="pat-title">Autonomous Multi-Satellite Reconfiguration System for Asteroid Proximity Operations</div>
+    </a>
+    <a href="https://patents.google.com/patent/US18941276" target="_blank" class="pat rv">
+      <div class="pat-id"><i class="fas fa-shield-alt" style="margin-right:.4rem"></i> US 18/941,276</div>
+      <div class="pat-title">Swarm-Based Guidance, Navigation and Control Architecture for Small Body Exploration</div>
+    </a>
+    <a href="https://patents.google.com/patent/IN202341070918" target="_blank" class="pat rv">
+      <div class="pat-id"><i class="fas fa-shield-alt" style="margin-right:.4rem"></i> IN 202341070918</div>
+      <div class="pat-title">Machine Learning Framework for Spacecraft Fault Detection and Isolation</div>
+    </a>
+    <div class="pat rv" style="border-color:var(--border);opacity:.7">
+      <div class="pat-id"><i class="fas fa-lock" style="margin-right:.4rem"></i> 3 Additional Patents Filed</div>
+      <div class="pat-title">Details under NDA — pending publication</div>
+    </div>
+  </div>
+</section>
+
+<!-- AWARDS -->
+<section id="awards">
+  <div class="container">
+    <div class="sh rv"><div class="sh-code">SECTION 06 — COMMENDATIONS</div><div class="sh-title">Awards & Honors</div></div>
+    <div class="aw rv">
+      <div class="aw-icon"><i class="fas fa-star"></i></div>
+      <div><div class="aw-title">IAF Young Space Leaders Pioneer Award</div><div class="aw-desc">Top 5 globally — International Astronautical Federation recognition for outstanding early-career contributions to space science and technology.</div></div>
+    </div>
+    <div class="aw rv">
+      <div class="aw-icon"><i class="fas fa-award"></i></div>
+      <div><div class="aw-title">AAS Molly K. Macauley Award</div><div class="aw-desc">Top 10 nationally — American Astronautical Society award for exceptional research in space policy and technology advancement.</div></div>
+    </div>
+    <div class="aw rv">
+      <div class="aw-icon"><i class="fas fa-meteor"></i></div>
+      <div><div class="aw-title">Asteroid (333183) Harishswabhash</div><div class="aw-desc">A main-belt asteroid officially named by the International Astronomical Union in recognition of contributions to planetary science.</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- SKILLS -->
+<section id="skills">
+  <div class="container">
+    <div class="sh rv"><div class="sh-code">SECTION 07 — SYSTEM CAPABILITIES</div><div class="sh-title">Technical Skills</div></div>
+    <div class="sk-g">
+      <div class="sk-cat rv">
+        <div class="sk-cat-title">GNC & Astrodynamics</div>
+        <span class="skp">Orbital Mechanics</span>
+        <span class="skp">ROE Navigation</span>
+        <span class="skp">Kalman Filters</span>
+        <span class="skp">Attitude Control</span>
+        <span class="skp">Trajectory Optimization</span>
+        <span class="skp">Formation Flying</span>
+        <span class="skp">Proximity Operations</span>
+        <span class="skp">Monte Carlo Analysis</span>
+      </div>
+      <div class="sk-cat rv">
+        <div class="sk-cat-title">Software & Simulation</div>
+        <span class="skp">MATLAB/Simulink</span>
+        <span class="skp">Python</span>
+        <span class="skp">C/C++</span>
+        <span class="skp">Basilisk</span>
+        <span class="skp">GMAT</span>
+        <span class="skp">STK</span>
+        <span class="skp">ROS</span>
+        <span class="skp">Git</span>
+        <span class="skp">Docker</span>
+      </div>
+      <div class="sk-cat rv">
+        <div class="sk-cat-title">AI & Machine Learning</div>
+        <span class="skp">Reinforcement Learning</span>
+        <span class="skp">Neural Networks</span>
+        <span class="skp">TensorFlow</span>
+        <span class="skp">PyTorch</span>
+        <span class="skp">Computer Vision</span>
+        <span class="skp">Fault Detection (FDI)</span>
+        <span class="skp">Autonomous Systems</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- EDUCATION -->
+<section id="education">
+  <div class="container">
+    <div class="sh rv"><div class="sh-code">SECTION 08 — TRAINING LOG</div><div class="sh-title">Education</div></div>
+    <div class="edu rv">
+      <div class="edu-deg">M.S. Aerospace Engineering</div>
+      <div class="edu-school">University of Arizona</div>
+      <div class="edu-date">Aug 2023 — May 2026 &nbsp;|&nbsp; GPA: 3.6</div>
+      <div class="edu-details">Thesis: ARISE — Autonomous Reconfigurable Infrastructure for Swarm-based Exploration. Advisor: Dr. Jekan Thangavelautham, SpaceTREx Laboratory. Focus on spacecraft GNC, multi-satellite autonomy, and swarm architectures for asteroid exploration.</div>
+    </div>
+    <div class="edu rv">
+      <div class="edu-deg">B.S. Mechanical Engineering</div>
+      <div class="edu-school">MVJ College of Engineering</div>
+      <div class="edu-date">2016 — 2020 &nbsp;|&nbsp; GPA: 3.33</div>
+      <div class="edu-details">Foundation in mechanical engineering with focus on thermodynamics, fluid mechanics, and structural analysis. Gateway to aerospace specialization.</div>
+    </div>
+  </div>
+</section>
+
+<!-- CONTACT -->
+<section id="contact">
+  <div class="container">
+    <div class="sh rv"><div class="sh-code">SECTION 09 — COMMUNICATIONS ARRAY</div><div class="sh-title">Get In Touch</div><div class="sh-sub">Open a comm channel — always available for research collaborations, opportunities, and discussions.</div></div>
+    <a href="mailto:harish.vernekar1@gmail.com" class="cl rv"><i class="fas fa-envelope"></i><span>harish.vernekar1@gmail.com</span></a>
+    <a href="https://www.linkedin.com/in/harish-vernekar/" target="_blank" class="cl rv"><i class="fab fa-linkedin"></i><span>LinkedIn — Harish Vernekar</span></a>
+    <a href="https://scholar.google.com/citations?hl=en&user=CdPmiksAAAAJ" target="_blank" class="cl rv"><i class="fas fa-graduation-cap"></i><span>Google Scholar</span></a>
+    <a href="https://www.researchgate.net/profile/Harish-Vernekar" target="_blank" class="cl rv"><i class="fab fa-researchgate"></i><span>ResearchGate</span></a>
+  </div>
+</section>
+
+<div style="text-align:center;padding:3rem;font-family:'JetBrains Mono',monospace;font-size:.7rem;color:var(--text3);position:relative;z-index:2">
+  <span style="color:var(--hud)">⟨/⟩</span> Designed & engineered by Harish Vernekar &nbsp;|&nbsp; Mission Clock: 2026
+</div>
+
+<script>
+/* BOOT SEQUENCE */
+(function(){
+const lines=document.querySelectorAll('.boot-line'),fill=document.getElementById('bfill');
+let i=0;
+function nextLine(){if(i<lines.length){lines[i].style.transition='all .4s';lines[i].style.opacity='1';lines[i].style.transform='translateY(0)';fill.style.transition='width .4s';fill.style.width=((i+1)/lines.length*100)+'%';i++;setTimeout(nextLine,400)}else{setTimeout(()=>{const b=document.getElementById('boot');b.style.opacity='0';setTimeout(()=>b.style.display='none',1000)},600)}}
+nextLine();
+})();
+
+/* CURSOR */
+let mx=0,my=0,rx=0,ry=0;const cur=document.getElementById('cur'),cdot=document.getElementById('cdot');
+document.addEventListener('mousemove',e=>{mx=e.clientX;my=e.clientY;cdot.style.left=mx+'px';cdot.style.top=my+'px'});
+(function ac(){rx+=(mx-rx)*.12;ry+=(my-ry)*.12;cur.style.left=rx+'px';cur.style.top=ry+'px';requestAnimationFrame(ac)})();
+document.querySelectorAll('a,button,.ht,.skp,.hb,.pub-e,.pat,.aw,.mcard,.cl,.ttgl,.edu,.vid-card').forEach(el=>{el.addEventListener('mouseenter',()=>cur.classList.add('on'));el.addEventListener('mouseleave',()=>cur.classList.remove('on'))});
+
+/* VIDEO CONTROLS — YouTube iframes handle their own playback */
+
+/* SCROLL */
+window.addEventListener('scroll',()=>{const p=window.scrollY/(document.documentElement.scrollHeight-window.innerHeight);document.getElementById('nprog').style.width=(p*100)+'%';document.getElementById('nav').classList.toggle('scrolled',window.scrollY>80)});
+
+/* CLOCK */
+(function ck(){const d=new Date();document.getElementById('clk').textContent=[d.getHours(),d.getMinutes(),d.getSeconds()].map(v=>String(v).padStart(2,'0')).join(':');requestAnimationFrame(ck)})();
+
+/* THEME */
+function toggleTheme(){const h=document.documentElement,d=h.dataset.theme==='dark';h.dataset.theme=d?'light':'dark';document.getElementById('tlbl').textContent=d?'NIGHT CYCLE':'DAY CYCLE';document.querySelector('.ttgl i').className=d?'fas fa-moon':'fas fa-sun'}
+
+/* THREE.JS */
+(function(){
+const c=document.getElementById('scene3d'),r=new THREE.WebGLRenderer({canvas:c,antialias:true,alpha:true});
+r.setSize(innerWidth,innerHeight);r.setPixelRatio(Math.min(devicePixelRatio,2));
+const s=new THREE.Scene(),cam=new THREE.PerspectiveCamera(50,innerWidth/innerHeight,.1,2000);cam.position.set(0,0,8);
+
+/* Stars */
+const sg=new THREE.BufferGeometry(),sc=4000,sp=new Float32Array(sc*3),sl=new Float32Array(sc*3);
+for(let i=0;i<sc;i++){sp[i*3]=(Math.random()-.5)*100;sp[i*3+1]=(Math.random()-.5)*100;sp[i*3+2]=(Math.random()-.5)*100;const b=Math.random();sl[i*3]=sl[i*3+1]=sl[i*3+2]=b}
+sg.setAttribute('position',new THREE.BufferAttribute(sp,3));sg.setAttribute('color',new THREE.BufferAttribute(sl,3));
+s.add(new THREE.Points(sg,new THREE.PointsMaterial({size:.08,vertexColors:true,transparent:true,opacity:.8})));
+
+/* Asteroid */
+const ag=new THREE.IcosahedronGeometry(1.2,2);
+const verts=ag.attributes.position;
+for(let i=0;i<verts.count;i++){const v=new THREE.Vector3().fromBufferAttribute(verts,i);v.multiplyScalar(.85+Math.random()*.3);verts.setXYZ(i,v.x,v.y,v.z)}
+ag.computeVertexNormals();
+const ast=new THREE.Mesh(ag,new THREE.MeshStandardMaterial({color:0x444444,roughness:.85,metalness:.1,flatShading:true}));
+s.add(ast);
+
+/* Lights */
+s.add(new THREE.AmbientLight(0x222244,.4));
+const dl=new THREE.DirectionalLight(0xffffee,.8);dl.position.set(5,3,5);s.add(dl);
+const pl=new THREE.PointLight(0x00ffff,.5,20);pl.position.set(-3,2,3);s.add(pl);
+
+/* Spacecraft */
+function makeCraft(color,size){
+const g=new THREE.Group();
+const body=new THREE.Mesh(new THREE.BoxGeometry(size,size*.4,size*.6),new THREE.MeshStandardMaterial({color:0x888899,metalness:.6,roughness:.3}));
+g.add(body);
+const panel1=new THREE.Mesh(new THREE.BoxGeometry(size*2,.02,size*.5),new THREE.MeshStandardMaterial({color:color,metalness:.3,roughness:.5,emissive:color,emissiveIntensity:.2}));
+panel1.position.x=size*1.2;g.add(panel1);
+const panel2=panel1.clone();panel2.position.x=-size*1.2;g.add(panel2);
+return g;
+}
+const craft1=makeCraft(0x0088ff,.12);s.add(craft1);
+const craft2=makeCraft(0x00ff88,.1);s.add(craft2);
+const craft3=makeCraft(0xff3366,.09);s.add(craft3);
+
+/* Particle trails */
+function makeTrail(color,count){
+const tg=new THREE.BufferGeometry(),tp=new Float32Array(count*3);
+tg.setAttribute('position',new THREE.BufferAttribute(tp,3));
+return{geom:tg,pts:new THREE.Points(tg,new THREE.PointsMaterial({color:color,size:.025,transparent:true,opacity:.6})),positions:tp,idx:0,count:count};
+}
+const t1=makeTrail(0x0088ff,200),t2=makeTrail(0x00ff88,150),t3=makeTrail(0xff3366,120);
+s.add(t1.pts);s.add(t2.pts);s.add(t3.pts);
+
+function updateTrail(trail,x,y,z){
+trail.positions[trail.idx*3]=x;trail.positions[trail.idx*3+1]=y;trail.positions[trail.idx*3+2]=z;
+trail.idx=(trail.idx+1)%trail.count;trail.geom.attributes.position.needsUpdate=true;
+}
+
+let scrollY=0;
+window.addEventListener('scroll',()=>{scrollY=window.scrollY/(document.documentElement.scrollHeight-window.innerHeight)});
+window.addEventListener('resize',()=>{cam.aspect=innerWidth/innerHeight;cam.updateProjectionMatrix();r.setSize(innerWidth,innerHeight)});
+
+function anim(t){
+requestAnimationFrame(anim);
+const T=t*.001;
+
+ast.rotation.y=T*.08;ast.rotation.x=Math.sin(T*.05)*.15;
+
+const r1=2.2,a1=T*.4;
+craft1.position.set(Math.cos(a1)*r1,Math.sin(a1*.7)*.4,Math.sin(a1)*r1);
+craft1.lookAt(ast.position);
+updateTrail(t1,craft1.position.x,craft1.position.y,craft1.position.z);
+
+const r2=2.8,a2=T*.3+2;
+craft2.position.set(Math.cos(a2)*r2,Math.sin(a2*.5)*.6,Math.sin(a2)*r2);
+craft2.lookAt(ast.position);
+updateTrail(t2,craft2.position.x,craft2.position.y,craft2.position.z);
+
+const r3=3.3,a3=T*.25+4;
+craft3.position.set(Math.cos(a3)*r3,Math.sin(a3*.3)*.8,Math.sin(a3)*r3);
+craft3.lookAt(ast.position);
+updateTrail(t3,craft3.position.x,craft3.position.y,craft3.position.z);
+
+cam.position.y=-scrollY*3+Math.sin(T*.15)*.3;
+cam.lookAt(0,-scrollY*2,0);
+
+r.render(s,cam);
+}
+anim(0);
+})();
+
+/* REVEAL ON SCROLL */
+const obs=new IntersectionObserver((entries)=>{entries.forEach(e=>{if(e.isIntersecting){e.target.classList.add('vis');obs.unobserve(e.target)}})},{threshold:0.1,rootMargin:'0px 0px -50px 0px'});
+document.querySelectorAll('.rv').forEach(el=>obs.observe(el));
+
+/* NAV ACTIVE */
+document.querySelectorAll('.ht').forEach(link=>{link.addEventListener('click',function(){document.querySelectorAll('.ht').forEach(l=>l.classList.remove('active'));this.classList.add('active')})});
+</script>
+</body>
+</html>
