@@ -795,60 +795,99 @@ document.querySelectorAll('.ht').forEach(link=>{link.addEventListener('click',fu
 /* ═══ GSAP SCROLLTRIGGER ENHANCEMENTS ═══ */
 gsap.registerPlugin(ScrollTrigger);
 
+/* Remove .rv class from GSAP-animated elements to prevent conflict */
+document.querySelectorAll('.mcard,.tl-item,.pub-e,.aw,.vid-card,.sk-cat,.skp,.edu,.pat,.cl').forEach(el=>{
+  el.classList.remove('rv');
+  el.style.opacity='0';
+  el.style.transform='translateY(30px)';
+});
+
 /* Parallax section headers */
 document.querySelectorAll('.sh-title').forEach(title=>{
-  gsap.from(title,{
+  gsap.fromTo(title,{x:-60,opacity:0},{
     scrollTrigger:{trigger:title,start:'top 85%',end:'top 40%',scrub:1},
-    x:-60,opacity:0
+    x:0,opacity:1
   });
 });
 
 /* Stagger timeline items with different entry angles */
 document.querySelectorAll('.tl-item').forEach((item,i)=>{
-  gsap.from(item,{
+  gsap.fromTo(item,{x:i%2===0?-80:80,opacity:0},{
     scrollTrigger:{trigger:item,start:'top 88%',toggleActions:'play none none none'},
-    x:i%2===0?-80:80,opacity:0,duration:0.8,ease:'power3.out'
+    x:0,opacity:1,duration:0.8,ease:'power3.out'
   });
 });
 
 /* Publication cards slide in from alternating sides */
 document.querySelectorAll('.pub-e').forEach((pub,i)=>{
-  gsap.from(pub,{
+  gsap.fromTo(pub,{x:i%2===0?-60:60,rotateY:i%2===0?-5:5,opacity:0},{
     scrollTrigger:{trigger:pub,start:'top 90%',toggleActions:'play none none none'},
-    x:i%2===0?-60:60,rotateY:i%2===0?-5:5,opacity:0,duration:0.7,ease:'power2.out',delay:i*0.05
+    x:0,rotateY:0,opacity:1,duration:0.7,ease:'power2.out',delay:i*0.05
   });
 });
 
 /* Bento cards scale and fade */
 document.querySelectorAll('.mcard').forEach((card,i)=>{
-  gsap.from(card,{
+  gsap.fromTo(card,{scale:0.85,opacity:0,y:30},{
     scrollTrigger:{trigger:card,start:'top 88%',toggleActions:'play none none none'},
-    scale:0.85,opacity:0,duration:0.6,ease:'back.out(1.5)',delay:i*0.08
+    scale:1,opacity:1,y:0,duration:0.6,ease:'back.out(1.5)',delay:i*0.08
   });
 });
 
 /* Skill pills stagger */
 document.querySelectorAll('.sk-cat').forEach(cat=>{
   const pills=cat.querySelectorAll('.skp');
-  gsap.from(pills,{
+  gsap.fromTo(pills,{y:15,opacity:0,scale:0.8},{
     scrollTrigger:{trigger:cat,start:'top 85%',toggleActions:'play none none none'},
-    y:15,opacity:0,scale:0.8,stagger:0.04,duration:0.4,ease:'back.out(2)'
+    y:0,opacity:1,scale:1,stagger:0.04,duration:0.4,ease:'back.out(2)'
+  });
+});
+
+/* Skill category cards */
+document.querySelectorAll('.sk-cat').forEach((cat,i)=>{
+  gsap.fromTo(cat,{opacity:0,y:30},{
+    scrollTrigger:{trigger:cat,start:'top 88%',toggleActions:'play none none none'},
+    opacity:1,y:0,duration:0.6,ease:'power2.out',delay:i*0.1
   });
 });
 
 /* Awards slide up with rotation */
 document.querySelectorAll('.aw').forEach((aw,i)=>{
-  gsap.from(aw,{
+  gsap.fromTo(aw,{y:50,rotateX:-10,opacity:0},{
     scrollTrigger:{trigger:aw,start:'top 88%',toggleActions:'play none none none'},
-    y:50,rotateX:-10,opacity:0,duration:0.7,ease:'power3.out',delay:i*0.1
+    y:0,rotateX:0,opacity:1,duration:0.7,ease:'power3.out',delay:i*0.1
   });
 });
 
 /* Video cards zoom in */
 document.querySelectorAll('.vid-card').forEach((card,i)=>{
-  gsap.from(card,{
+  gsap.fromTo(card,{scale:0.8,opacity:0},{
     scrollTrigger:{trigger:card,start:'top 88%',toggleActions:'play none none none'},
-    scale:0.8,opacity:0,duration:0.8,ease:'power2.out',delay:i*0.15
+    scale:1,opacity:1,duration:0.8,ease:'power2.out',delay:i*0.15
+  });
+});
+
+/* Education cards */
+document.querySelectorAll('.edu').forEach((edu,i)=>{
+  gsap.fromTo(edu,{opacity:0,y:40},{
+    scrollTrigger:{trigger:edu,start:'top 88%',toggleActions:'play none none none'},
+    opacity:1,y:0,duration:0.7,ease:'power2.out',delay:i*0.1
+  });
+});
+
+/* Patent cards */
+document.querySelectorAll('.pat').forEach((pat,i)=>{
+  gsap.fromTo(pat,{opacity:0,x:-40},{
+    scrollTrigger:{trigger:pat,start:'top 88%',toggleActions:'play none none none'},
+    opacity:1,x:0,duration:0.6,ease:'power2.out',delay:i*0.08
+  });
+});
+
+/* Contact links */
+document.querySelectorAll('.cl').forEach((cl,i)=>{
+  gsap.fromTo(cl,{opacity:0,x:-30},{
+    scrollTrigger:{trigger:cl,start:'top 90%',toggleActions:'play none none none'},
+    opacity:1,x:0,duration:0.5,ease:'power2.out',delay:i*0.08
   });
 });
 
